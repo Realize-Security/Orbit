@@ -27,9 +27,6 @@ func (dz *DNSZones) GetZoneData(path string) ([]ZoneFile, error) {
 		if err != nil {
 			return nil, err
 		}
-		if len(fb) == 0 {
-			return nil, errors.New("empty file")
-		}
 		fd, err := parseZoneFileData(fb)
 		if err != nil {
 			return nil, err
