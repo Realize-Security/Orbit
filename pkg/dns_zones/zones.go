@@ -2,7 +2,6 @@ package dns_zones
 
 import (
 	"errors"
-	"fmt"
 	"orbit/internal"
 	"os"
 	"strconv"
@@ -21,7 +20,14 @@ func (dz *DNSZones) GetZoneData(path string) ([]ZoneFile, error) {
 	}
 	switch mode := fileInfo.Mode(); {
 	case mode.IsDir():
-		fmt.Printf("Its a directory")
+		records, err := readZoneFileDirectory(path)
+		if err != nil {
+			return nil, err
+		}
+		if len(records) == 0 {
+			return nil, errors.New("no zone files found in directory: " + path)
+		}
+		zf = records
 	case mode.IsRegular():
 		fb, err := internal.ReadFileLines(path)
 		if err != nil {
@@ -37,6 +43,32 @@ func (dz *DNSZones) GetZoneData(path string) ([]ZoneFile, error) {
 	}
 
 	return zf, nil
+}
+
+func readZoneFileDirectory(path string) ([]ZoneFile, error) {
+	var results []ZoneFile
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+	zoneFiles := make([]os.DirEntry, 0)
+	for _, file := range files {
+		if internal.IsZoneFile(file) {
+			zoneFiles = append(zoneFiles, file)
+		}
+		for i := range zoneFiles {
+			zfLines, err := internal.ReadFileLines(path + "/" + zoneFiles[i].Name())
+			if err != nil {
+				continue
+			}
+			zfData, err := parseZoneFileData(zfLines)
+			if err != nil {
+				continue
+			}
+			results = append(results, zfData)
+		}
+	}
+	return results, err
 }
 
 func parseZoneFileData(data []string) (ZoneFile, error) {
@@ -63,9 +95,9 @@ func parseZoneFileData(data []string) (ZoneFile, error) {
 			} else {
 				zr.Content = parseRecordContentField(sections)
 			}
+			zf.Records = append(zf.Records, zr)
 		}
 		i++
-		zf.Records = append(zf.Records, zr)
 	}
 	return zf, nil
 }

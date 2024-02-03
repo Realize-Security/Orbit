@@ -8,7 +8,7 @@ import (
 
 func main() {
 	zones := dns_zones.DNSZones{}
-	results, err := zones.GetZoneData("/Users/richard/operations/moneycorp/attack_surface_mapping/test_data/Zone Files/moneycorp.tech.zone")
+	results, err := zones.GetZoneData("/Users/richard/operations/moneycorp/attack_surface_mapping/test_data/Zone Files/")
 	if err != nil {
 		os.Exit(1)
 	}
