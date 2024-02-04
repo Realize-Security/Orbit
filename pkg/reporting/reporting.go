@@ -7,36 +7,26 @@ import (
 	"strings"
 )
 
-var (
-	ipv4 = "ipv4"
-	ipv6 = "ipv6"
-)
-
 type Reporting struct{}
 
 // ListAandAAARecords prints A and AAA records to the terminal grouped by zone.
-func (rep *Reporting) ListAandAAARecords(data []dns_zones.ZoneFile) {
-	rep.listRecords(data, []string{"A", "AAA"})
+func (rep *Reporting) ListAandAAARecords(zone dns_zones.ZoneFile) {
+	rep.listSingleRecord(zone, []string{"A", "AAA"})
 }
 
 // ListCNames prints CNAME records to the terminal grouped by zone.
-func (rep *Reporting) ListCNames(data []dns_zones.ZoneFile) {
-	rep.listRecords(data, []string{"CNAME"})
+func (rep *Reporting) ListCNames(zone dns_zones.ZoneFile) {
+	rep.listSingleRecord(zone, []string{"CNAME"})
 }
 
-// listRecords prints requested records to the terminal grouped by zone.
-func (rep *Reporting) listRecords(data []dns_zones.ZoneFile, rec []string) {
+// listSingleRecord prints requested records to the terminal grouped by zone.
+func (rep *Reporting) listSingleRecord(zone dns_zones.ZoneFile, rec []string) {
 	noResults := true
-	for _, d := range data {
-		records := rep.sortRecords(&d, rec)
-		if len(records) == 0 {
-			continue
-		}
-		noResults = false
-		fmt.Printf("---- %s ----\n", d.Origin)
-		for _, r := range records {
-			fmt.Println(r)
-		}
+	records := rep.sortRecords(&zone, rec)
+	noResults = false
+	fmt.Printf("---- %s ----\n", zone.Origin)
+	for _, r := range records {
+		fmt.Println(r)
 	}
 	if noResults {
 		fmt.Println("[!] No records found.")
@@ -44,19 +34,17 @@ func (rep *Reporting) listRecords(data []dns_zones.ZoneFile, rec []string) {
 }
 
 // GetFQDNTargets prints potential targets by outputting A/AAA/CNAME values and IP addresses.
-func (rep *Reporting) GetFQDNTargets(data []dns_zones.ZoneFile) []string {
+func (rep *Reporting) GetFQDNTargets(zone dns_zones.ZoneFile) []string {
 	var results []string
-	for _, zone := range data {
-		origin := strings.TrimSuffix(zone.Origin, ".")
-		for _, rec := range zone.Records {
-			if rec.Type == "A" || rec.Type == "AAA" || rec.Type == "CNAME" {
-				fqdn := rec.Name + "." + origin
-				if rec.Name == "@" || rec.Name == "*" {
-					fqdn = origin
-				}
-				if !rep.contains(results, fqdn) {
-					results = append(results, fqdn)
-				}
+	origin := strings.TrimSuffix(zone.Origin, ".")
+	for _, rec := range zone.Records {
+		if rec.Type == "A" || rec.Type == "AAA" || rec.Type == "CNAME" {
+			fqdn := rec.Name + "." + origin
+			if rec.Name == "@" || rec.Name == "*" {
+				fqdn = origin
+			}
+			if !rep.contains(results, fqdn) {
+				results = append(results, fqdn)
 			}
 		}
 	}
@@ -64,28 +52,32 @@ func (rep *Reporting) GetFQDNTargets(data []dns_zones.ZoneFile) []string {
 }
 
 // GetIPAddressTargets extract IP addresses
-func (rep *Reporting) GetIPAddressTargets(data []dns_zones.ZoneFile) *dns_zones.IPCollection {
+func (rep *Reporting) GetIPAddressTargets(zone dns_zones.ZoneFile) *dns_zones.IPCollection {
 	var results dns_zones.IPCollection
-	for _, zone := range data {
-		for _, rec := range zone.Records {
-			ip := rec.Content
-			if rep.isIPv4(ip) && !rep.contains(results.IPv4, ip) {
-				results.IPv4 = append(results.IPv4, ip)
-			} else if rep.isIPv6(ip) && !rep.contains(results.IPv6, ip) {
-				results.IPv6 = append(results.IPv6, ip)
+	for _, rec := range zone.Records {
+		ip := net.ParseIP(rec.Content)
+		exists := func(ips []net.IP, ip net.IP) bool {
+			for i := range ips {
+				if ips[i].String() == ip.String() {
+					return true
+				}
 			}
+			return false
+		}
+		if rep.isIPv4(ip) && !exists(results.IPv4, ip) {
+			results.IPv4 = append(results.IPv4, ip)
+		} else if rep.isIPv6(ip) && !exists(results.IPv4, ip) {
+			results.IPv6 = append(results.IPv6, ip)
 		}
 	}
 	return &results
 }
 
-func (rep *Reporting) isIPv4(ipStr string) bool {
-	ip := net.ParseIP(ipStr)
+func (rep *Reporting) isIPv4(ip net.IP) bool {
 	return ip != nil && ip.To4() != nil
 }
 
-func (rep *Reporting) isIPv6(ipStr string) bool {
-	ip := net.ParseIP(ipStr)
+func (rep *Reporting) isIPv6(ip net.IP) bool {
 	return ip != nil && ip.To4() == nil && ip.To16() != nil
 }
 

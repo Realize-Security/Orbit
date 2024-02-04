@@ -1,5 +1,7 @@
 package dns_zones
 
+import "net"
+
 type ZoneFile struct {
 	Origin  string
 	Records []DNSRecord
@@ -14,6 +16,6 @@ type DNSRecord struct {
 }
 
 type IPCollection struct {
-	IPv4 []string
-	IPv6 []string
+	IPv4 []net.IP
+	IPv6 []net.IP
 }

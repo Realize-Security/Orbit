@@ -25,24 +25,46 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	listArecs, _ := cmd.RootCmd.PersistentFlags().GetBool("a-records")
-	if listArecs {
-		rep.ListAandAAARecords(results)
+	listArecords, _ := cmd.RootCmd.PersistentFlags().GetBool("a-records")
+	if listArecords {
+		for _, result := range results {
+			rep.ListAandAAARecords(result)
+		}
 	}
 
 	listCNAMEs, _ := cmd.RootCmd.PersistentFlags().GetBool("cname")
 	if listCNAMEs {
-		rep.ListCNames(results)
+		for _, result := range results {
+			rep.ListAandAAARecords(result)
+		}
 	}
 
 	showFQDNs, _ := cmd.RootCmd.PersistentFlags().GetBool("targets")
 	if showFQDNs {
-		rep.GetFQDNTargets(results)
+		for _, result := range results {
+			fqdns := rep.GetFQDNTargets(result)
+			for _, f := range fqdns {
+				fmt.Println(f)
+			}
+		}
+
 	}
 
 	showIps, _ := cmd.RootCmd.PersistentFlags().GetBool("ips")
 	if showIps {
-		rep.GetIPAddressTargets(results)
+		for _, rec := range results {
+			ips := rep.GetIPAddressTargets(rec)
+			if len(ips.IPv4) > 0 {
+				for _, ip := range ips.IPv4 {
+					fmt.Println(ip)
+				}
+			}
+			if len(ips.IPv6) > 0 {
+				for _, ip := range ips.IPv6 {
+					fmt.Println(ip)
+				}
+			}
+		}
 	}
 
 }
