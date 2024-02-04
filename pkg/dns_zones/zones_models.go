@@ -12,3 +12,8 @@ type DNSRecord struct {
 	Content string
 	TTL     int
 }
+
+type IPCollection struct {
+	IPv4 []string
+	IPv6 []string
+}
