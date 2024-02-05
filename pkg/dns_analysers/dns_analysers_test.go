@@ -1,4 +1,4 @@
-package analysers
+package dns_analysers
 
 import (
 	"testing"
