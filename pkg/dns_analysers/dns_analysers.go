@@ -57,24 +57,13 @@ func (an *DNSAnalyser) IPLookup(domain string) ([]net.IP, error) {
 	return res, nil
 }
 
-func (an *DNSAnalyser) GetCNAME(u string) (string, error) {
-	u, err := normaliseURLScheme(u)
+func (an *DNSAnalyser) GetCNAME(domain string) (string, error) {
+	hostname, err := normaliseAndExtractHostname(domain)
 	if err != nil {
 		return "", err
 	}
 
-	hostname, err := extractHostname(u)
-	if err != nil {
-		return "", err
-	}
-
-	c := new(dns.Client)
-	m := new(dns.Msg)
-	// Ensure the hostname is fully qualified
-	m.SetQuestion(dns.Fqdn(hostname), dns.TypeCNAME)
-	m.RecursionDesired = true
-
-	r, _, err := c.Exchange(m, resolverIP+":53")
+	r, err := initDNSMsg(domain, dns.TypeCNAME)
 	if err != nil {
 		return "", fmt.Errorf("DNS query failed: %w", err)
 	}
@@ -90,30 +79,20 @@ func (an *DNSAnalyser) GetCNAME(u string) (string, error) {
 	return "", fmt.Errorf("no CNAME record found for %s", hostname)
 }
 
-func (an *DNSAnalyser) GetTXT(u string) ([]string, error) {
-	hostname, err := normaliseURLScheme(u)
+func (an *DNSAnalyser) GetTXT(domain string) ([]string, error) {
+	hostname, err := normaliseAndExtractHostname(domain)
 	if err != nil {
 		return nil, err
 	}
-	hostname, err = extractHostname(hostname)
-	if err != nil {
-		return nil, err
-	}
-
-	c := new(dns.Client)
-	m := new(dns.Msg)
-	// Ensure the hostname is fully qualified
-	m.SetQuestion(dns.Fqdn(hostname), dns.TypeTXT)
-	m.RecursionDesired = true
 
 	// Perform the DNS query using the specified resolver
-	r, _, err := c.Exchange(m, resolverIP+":53")
+	msg, err := initDNSMsg(hostname, dns.TypeTXT)
 	if err != nil {
 		return nil, fmt.Errorf("DNS query failed: %w", err)
 	}
 
 	var txtRecords []string
-	for _, ans := range r.Answer {
+	for _, ans := range msg.Answer {
 		if t, ok := ans.(*dns.TXT); ok {
 			for _, txt := range t.Txt {
 				txtRecords = append(txtRecords, txt)
@@ -122,6 +101,47 @@ func (an *DNSAnalyser) GetTXT(u string) ([]string, error) {
 	}
 
 	return txtRecords, nil
+}
+
+// DNSSECEnabled returns a boolean based on whether DNSSEC is enabled on a domain.
+func (an *DNSAnalyser) DNSSECEnabled(domain string) (bool, error) {
+	msg, err := initDNSMsg(domain, dns.TypeDS)
+	if err != nil {
+		return false, err
+	}
+
+	for _, ans := range msg.Answer {
+		if _, ok := ans.(*dns.DS); ok {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func initDNSMsg(domain string, dnsType uint16) (*dns.Msg, error) {
+	m := new(dns.Msg)
+	c := new(dns.Client)
+	m.SetQuestion(dns.Fqdn(domain), dnsType)
+	m.RecursionDesired = true
+
+	msg, _, err := c.Exchange(m, resolverIP+":53")
+	if err != nil {
+		return msg, err
+	}
+	return msg, nil
+}
+
+func normaliseAndExtractHostname(domain string) (string, error) {
+	domain, err := normaliseURLScheme(domain)
+	if err != nil {
+		return "", err
+	}
+
+	hostname, err := extractHostname(domain)
+	if err != nil {
+		return "", err
+	}
+	return hostname, nil
 }
 
 // normaliseURLScheme takes URLs without a schema or path and prepends a schema and '/' respectively.

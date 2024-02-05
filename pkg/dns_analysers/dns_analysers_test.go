@@ -49,3 +49,11 @@ func TestGetTXT(t *testing.T) {
 		t.Errorf("GetTXT failed: %v", err)
 	}
 }
+
+func TestDNSSECEnabled(t *testing.T) {
+	an := &DNSAnalyser{}
+	_, err := an.DNSSECEnabled(domainShort)
+	if err != nil {
+		t.Errorf("Checking DNSSEC failed: %v", err)
+	}
+}
