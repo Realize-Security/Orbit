@@ -1,0 +1,42 @@
+package ip_addresses
+
+import (
+	"net"
+	"orbit/models"
+)
+
+type IPAddresses struct{}
+
+func (ipa *IPAddresses) IPAddressesFromFile(path string) {}
+
+// IPAddressesFromZones extract IP addresses from zone file data.
+func (ipa *IPAddresses) IPAddressesFromZones(zone models.ZoneFile) *models.IPCollection {
+	var results models.IPCollection
+	for _, rec := range zone.Records {
+		ip := net.ParseIP(rec.Content)
+		exists := func(ips []net.IP, ip net.IP) bool {
+			for i := range ips {
+				if ips[i].String() == ip.String() {
+					return true
+				}
+			}
+			return false
+		}
+		if ipa.IsIPv4(ip) && !exists(results.IPv4, ip) {
+			results.IPv4 = append(results.IPv4, ip)
+		} else if ipa.IsIPv6(ip) && !exists(results.IPv4, ip) {
+			results.IPv6 = append(results.IPv6, ip)
+		}
+	}
+	return &results
+}
+
+// IsIPv4 returns true if the value is a valid IPv4.
+func (ipa *IPAddresses) IsIPv4(ip net.IP) bool {
+	return ip != nil && ip.To4() != nil
+}
+
+// IsIPv6 returns true if the value is a valid IPv6.
+func (ipa *IPAddresses) IsIPv6(ip net.IP) bool {
+	return ip != nil && ip.To4() == nil && ip.To16() != nil
+}

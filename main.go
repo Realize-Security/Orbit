@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"log"
 	"orbit/cmd"
-	"orbit/pkg/dns_zones"
+	"orbit/pkg/ip_addresses"
 	"orbit/pkg/reporting"
+	"orbit/pkg/zone_files"
 	"os"
 )
 
@@ -18,8 +19,10 @@ func main() {
 	}
 	inputFile, _ := cmd.RootCmd.PersistentFlags().GetString("file")
 
-	zones := dns_zones.DNSZones{}
+	zones := zone_files.DNSZones{}
 	rep := reporting.Reporting{}
+	ipa := ip_addresses.IPAddresses{}
+
 	results, err := zones.GetZoneData(inputFile)
 	if err != nil {
 		fmt.Println(err)
@@ -28,14 +31,14 @@ func main() {
 	listArecords, _ := cmd.RootCmd.PersistentFlags().GetBool("a-records")
 	if listArecords {
 		for _, result := range results {
-			rep.ListAandAAARecords(result)
+			rep.AandAAARecords(result)
 		}
 	}
 
-	listCNAMEs, _ := cmd.RootCmd.PersistentFlags().GetBool("cname")
+	listCNAMEs, _ := cmd.RootCmd.PersistentFlags().GetBool("cnames")
 	if listCNAMEs {
 		for _, result := range results {
-			rep.ListCNAMERecords(result)
+			rep.CNAMERecords(result)
 		}
 	}
 
@@ -53,7 +56,7 @@ func main() {
 	showIps, _ := cmd.RootCmd.PersistentFlags().GetBool("ips")
 	if showIps {
 		for _, rec := range results {
-			ips := rep.GetIPAddressTargets(rec)
+			ips := ipa.IPAddressesFromZones(rec)
 			if len(ips.IPv4) > 0 {
 				for _, ip := range ips.IPv4 {
 					fmt.Println(ip)

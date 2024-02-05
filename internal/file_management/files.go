@@ -1,4 +1,4 @@
-package internal
+package file_management
 
 import (
 	"bufio"
@@ -26,9 +26,6 @@ func ReadFileBytes(path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	//x := string(bytes)
-	//y := strings.Split(x, "\r\n")
-	//fmt.Println(y)
 	return bytes, nil
 }
 

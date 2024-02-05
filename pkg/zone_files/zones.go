@@ -1,19 +1,20 @@
-package dns_zones
+package zone_files
 
 import (
 	"errors"
-	"orbit/internal"
+	"orbit/internal/file_management"
+	"orbit/models"
 	"os"
 	"strconv"
 	"strings"
 )
 
 type DNSZones struct {
-	zoneFile ZoneFile
+	zoneFile models.ZoneFile
 }
 
-func (dz *DNSZones) GetZoneData(path string) ([]ZoneFile, error) {
-	var zf []ZoneFile
+func (dz *DNSZones) GetZoneData(path string) ([]models.ZoneFile, error) {
+	var zf []models.ZoneFile
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		return nil, err
@@ -29,7 +30,7 @@ func (dz *DNSZones) GetZoneData(path string) ([]ZoneFile, error) {
 		}
 		zf = records
 	case mode.IsRegular():
-		fb, err := internal.ReadFileLines(path)
+		fb, err := file_management.ReadFileLines(path)
 		if err != nil {
 			return nil, err
 		}
@@ -45,19 +46,19 @@ func (dz *DNSZones) GetZoneData(path string) ([]ZoneFile, error) {
 	return zf, nil
 }
 
-func readZoneFileDirectory(path string) ([]ZoneFile, error) {
-	var results []ZoneFile
+func readZoneFileDirectory(path string) ([]models.ZoneFile, error) {
+	var results []models.ZoneFile
 	files, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
 	zoneFiles := make([]os.DirEntry, 0)
 	for _, file := range files {
-		if internal.IsZoneFile(file) {
+		if file_management.IsZoneFile(file) {
 			zoneFiles = append(zoneFiles, file)
 		}
 		for i := range zoneFiles {
-			zfLines, err := internal.ReadFileLines(path + "/" + zoneFiles[i].Name())
+			zfLines, err := file_management.ReadFileLines(path + "/" + zoneFiles[i].Name())
 			if err != nil {
 				continue
 			}
@@ -71,20 +72,20 @@ func readZoneFileDirectory(path string) ([]ZoneFile, error) {
 	return results, err
 }
 
-func parseZoneFileData(data []string) (ZoneFile, error) {
-	var zf ZoneFile
+func parseZoneFileData(data []string) (models.ZoneFile, error) {
+	var zf models.ZoneFile
 
 	zf.Origin = strings.Split(data[0], " ")[1]
 	i := 0
 	for _, l := range data {
-		var zr DNSRecord
+		var zr models.DNSRecord
 		l = cleanTabsAndSpaces(l)
 		sections := strings.Split(l, " ")
 		if i > 0 {
 			zr.Name = sections[0]
 			ttl, err := strconv.Atoi(sections[1])
 			if err != nil {
-				return ZoneFile{}, err
+				return models.ZoneFile{}, err
 			}
 			zr.TTL = ttl
 			zr.Class = sections[2]
