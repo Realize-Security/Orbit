@@ -3,16 +3,40 @@ package analysers
 import (
 	"fmt"
 	"github.com/miekg/dns"
+	"log"
 	"net"
 	"net/url"
 	"strings"
 )
 
-type Analyser struct{}
+type DNSAnalyser struct{}
 
 var resolverIP = "8.8.8.8"
 
-func (an *Analyser) ReverseLookup(ip string) ([]string, error) {
+// GetAllRecords queries for specific DNS record types for a domain.
+func (an *DNSAnalyser) GetAllRecords(domain string) ([][]dns.RR, error) {
+	client := new(dns.Client)
+	var results [][]dns.RR
+	recordTypes := []uint16{dns.TypeA, dns.TypeAAAA, dns.TypeMX, dns.TypeTXT, dns.TypeCNAME, dns.TypeNS, dns.TypeSRV}
+
+	for _, recordType := range recordTypes {
+		m := new(dns.Msg)
+		m.SetQuestion(dns.Fqdn(domain), recordType)
+		m.RecursionDesired = true
+
+		r, _, err := client.Exchange(m, resolverIP+":53")
+		if err != nil {
+			log.Printf("Error querying %s records: %v\n", dns.TypeToString[recordType], err)
+			continue
+		}
+
+		results = append(results, r.Answer)
+	}
+	return results, nil
+}
+
+// ReverseLookup performs a reverse lookup of domains associated with an IP address.
+func (an *DNSAnalyser) ReverseLookup(ip string) ([]string, error) {
 	names, err := net.LookupAddr(ip)
 	if err != nil {
 		return nil, err
@@ -20,7 +44,8 @@ func (an *Analyser) ReverseLookup(ip string) ([]string, error) {
 	return names, nil
 }
 
-func (an *Analyser) IPLookup(domain string) ([]net.IP, error) {
+// IPLookup returns IP addresses associated with a domain.
+func (an *DNSAnalyser) IPLookup(domain string) ([]net.IP, error) {
 	var res []net.IP
 	ips, err := net.LookupIP(domain)
 	if err != nil {
@@ -32,8 +57,8 @@ func (an *Analyser) IPLookup(domain string) ([]net.IP, error) {
 	return res, nil
 }
 
-func (an *Analyser) GetCNAME(u string) (string, error) {
-	u, err := checkForURLScheme(u)
+func (an *DNSAnalyser) GetCNAME(u string) (string, error) {
+	u, err := normaliseURLScheme(u)
 	if err != nil {
 		return "", err
 	}
@@ -65,8 +90,8 @@ func (an *Analyser) GetCNAME(u string) (string, error) {
 	return "", fmt.Errorf("no CNAME record found for %s", hostname)
 }
 
-func (an *Analyser) GetTXT(u string) ([]string, error) {
-	hostname, err := checkForURLScheme(u)
+func (an *DNSAnalyser) GetTXT(u string) ([]string, error) {
+	hostname, err := normaliseURLScheme(u)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +124,9 @@ func (an *Analyser) GetTXT(u string) ([]string, error) {
 	return txtRecords, nil
 }
 
-func checkForURLScheme(u string) (string, error) {
+// normaliseURLScheme takes URLs without a schema or path and prepends a schema and '/' respectively.
+// I.e., 'www.realizesec.com' becomes 'https:///www.realizesec.com/'
+func normaliseURLScheme(u string) (string, error) {
 	parsedUrl, err := url.Parse(u)
 	if err != nil {
 		return "", err

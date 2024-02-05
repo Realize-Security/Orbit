@@ -14,8 +14,8 @@ func (rep *Reporting) ListAandAAARecords(zone dns_zones.ZoneFile) {
 	rep.listSingleRecord(zone, []string{"A", "AAA"})
 }
 
-// ListCNames prints CNAME records to the terminal grouped by zone.
-func (rep *Reporting) ListCNames(zone dns_zones.ZoneFile) {
+// ListCNAMERecords prints CNAME records to the terminal grouped by zone.
+func (rep *Reporting) ListCNAMERecords(zone dns_zones.ZoneFile) {
 	rep.listSingleRecord(zone, []string{"CNAME"})
 }
 

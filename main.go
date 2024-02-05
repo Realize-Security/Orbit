@@ -35,7 +35,7 @@ func main() {
 	listCNAMEs, _ := cmd.RootCmd.PersistentFlags().GetBool("cname")
 	if listCNAMEs {
 		for _, result := range results {
-			rep.ListAandAAARecords(result)
+			rep.ListCNAMERecords(result)
 		}
 	}
 

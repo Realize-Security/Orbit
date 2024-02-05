@@ -10,8 +10,16 @@ var (
 	ipAddress   = "8.8.8.8"
 )
 
+func TestGetAllRecords(t *testing.T) {
+	an := &DNSAnalyser{}
+	_, err := an.GetAllRecords(domainShort)
+	if err != nil {
+		t.Errorf("Failed to lookup records for %v", err)
+	}
+}
+
 func TestReverseLookup(t *testing.T) {
-	an := &Analyser{}
+	an := &DNSAnalyser{}
 	_, err := an.ReverseLookup(ipAddress)
 	if err != nil {
 		t.Errorf("ReverseLookup failed: %v", err)
@@ -19,7 +27,7 @@ func TestReverseLookup(t *testing.T) {
 }
 
 func TestIPLookup(t *testing.T) {
-	an := &Analyser{}
+	an := &DNSAnalyser{}
 	_, err := an.IPLookup(domainShort)
 	if err != nil {
 		t.Errorf("IPLookup failed: %v", err)
@@ -27,7 +35,7 @@ func TestIPLookup(t *testing.T) {
 }
 
 func TestGetCNAME(t *testing.T) {
-	an := &Analyser{}
+	an := &DNSAnalyser{}
 	_, err := an.GetCNAME(cnameDomain)
 	if err != nil {
 		t.Errorf("GetCNAME failed: %v", err)
@@ -35,7 +43,7 @@ func TestGetCNAME(t *testing.T) {
 }
 
 func TestGetTXT(t *testing.T) {
-	an := &Analyser{}
+	an := &DNSAnalyser{}
 	_, err := an.GetTXT(domainShort)
 	if err != nil {
 		t.Errorf("GetTXT failed: %v", err)
