@@ -20,11 +20,12 @@ type IPCollection struct {
 	IPv6 []net.IP
 }
 
-type DomainCollection struct {
+type ASMAssessment struct {
 	Zones                []ZoneFile
 	IPAddresses          []IPCollection
-	Domains              []string
 	UntrackedIPAddresses []IPCollection
-	UntrackedDomains     []string
 	PrivateIPAddresses   []IPCollection
+	Domains              []string
+	UntrackedDomains     []string
+	MissingDNSSEC        []string
 }
