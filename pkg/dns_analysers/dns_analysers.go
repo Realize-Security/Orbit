@@ -137,11 +137,11 @@ func normaliseAndExtractHostname(domain string) (string, error) {
 		return "", err
 	}
 
-	hostname, err := extractHostname(domain)
+	domain, err = extractHostname(domain)
 	if err != nil {
 		return "", err
 	}
-	return hostname, nil
+	return domain, nil
 }
 
 // normaliseURLScheme takes URLs without a schema or path and prepends a schema and '/' respectively.
