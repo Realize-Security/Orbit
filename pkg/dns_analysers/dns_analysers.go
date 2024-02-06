@@ -5,6 +5,7 @@ import (
 	"github.com/miekg/dns"
 	"log"
 	"net"
+	"strings"
 )
 
 type DNSAnalyser struct{}
@@ -104,6 +105,9 @@ func (an *DNSAnalyser) GetTXT(domain string) ([]string, error) {
 
 // DNSSECEnabled returns a boolean based on whether DNSSEC is enabled on a domain.
 func (an *DNSAnalyser) DNSSECEnabled(domain string) (bool, error) {
+	if strings.HasSuffix(domain, ".") {
+		domain = strings.TrimSuffix(domain, ".")
+	}
 	msg, err := initDNSMsg(domain, dns.TypeDS)
 	if err != nil {
 		return false, err
