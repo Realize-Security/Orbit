@@ -76,6 +76,7 @@ func parseZoneFileData(data []string) (models.ZoneFile, error) {
 	var zf models.ZoneFile
 
 	zf.Origin = strings.Split(data[0], " ")[1]
+	zf.Origin = strings.TrimSuffix(zf.Origin, ".")
 	i := 0
 	for _, l := range data {
 		var zr models.DNSRecord
