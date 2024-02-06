@@ -22,7 +22,7 @@ type IPCollection struct {
 
 type ASMAssessment struct {
 	Zones                []ZoneFile
-	IPAddresses          []IPCollection
+	IPAddresses          IPCollection
 	UntrackedIPAddresses []IPCollection
 	PrivateIPAddresses   []IPCollection
 	Domains              []string
