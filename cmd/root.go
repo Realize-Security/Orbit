@@ -7,8 +7,7 @@ import (
 var (
 	RootCmd = &cobra.Command{
 		Use:   "orbit-cli",
-		Short: "Analyser for DNS records",
-		Long:  "Reads records from Zone files.",
+		Short: "Attack Surface Mapping Engine.",
 	}
 )
 
