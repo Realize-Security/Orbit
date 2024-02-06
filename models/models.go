@@ -28,5 +28,5 @@ type ASMAssessment struct {
 	Domains              []string
 	UntrackedDomains     []string
 	MissingDNSSEC        []string
-	Aliases              []map[string][]string
+	Aliases              []map[string]map[string]string
 }
