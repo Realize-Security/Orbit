@@ -5,8 +5,6 @@ import (
 	"github.com/miekg/dns"
 	"log"
 	"net"
-	"net/url"
-	"strings"
 )
 
 type DNSAnalyser struct{}
@@ -29,7 +27,6 @@ func (an *DNSAnalyser) GetAllRecords(domain string) ([][]dns.RR, error) {
 			log.Printf("Error querying %s records: %v\n", dns.TypeToString[recordType], err)
 			continue
 		}
-
 		results = append(results, r.Answer)
 	}
 	return results, nil
@@ -57,6 +54,7 @@ func (an *DNSAnalyser) IPLookup(domain string) ([]net.IP, error) {
 	return res, nil
 }
 
+// GetCNAME gets CNAME records for a domain.
 func (an *DNSAnalyser) GetCNAME(domain string) (string, error) {
 	hostname, err := normaliseAndExtractHostname(domain)
 	if err != nil {
@@ -79,6 +77,7 @@ func (an *DNSAnalyser) GetCNAME(domain string) (string, error) {
 	return "", fmt.Errorf("no CNAME record found for %s", hostname)
 }
 
+// GetTXT gets TXT records for a domain.
 func (an *DNSAnalyser) GetTXT(domain string) ([]string, error) {
 	hostname, err := normaliseAndExtractHostname(domain)
 	if err != nil {
@@ -129,41 +128,4 @@ func initDNSMsg(domain string, dnsType uint16) (*dns.Msg, error) {
 		return msg, err
 	}
 	return msg, nil
-}
-
-func normaliseAndExtractHostname(domain string) (string, error) {
-	domain, err := normaliseURLScheme(domain)
-	if err != nil {
-		return "", err
-	}
-
-	domain, err = extractHostname(domain)
-	if err != nil {
-		return "", err
-	}
-	return domain, nil
-}
-
-// normaliseURLScheme takes URLs without a schema or path and prepends a schema and '/' respectively.
-// I.e., 'www.realizesec.com' becomes 'https:///www.realizesec.com/'
-func normaliseURLScheme(u string) (string, error) {
-	parsedUrl, err := url.Parse(u)
-	if err != nil {
-		return "", err
-	}
-	if len(parsedUrl.Scheme) == 0 {
-		u = "https://" + u
-	}
-	if !strings.HasSuffix(u, "/") {
-		u = u + "/"
-	}
-	return u, nil
-}
-
-func extractHostname(urlStr string) (string, error) {
-	u, err := url.ParseRequestURI(urlStr)
-	if err != nil {
-		return "", err
-	}
-	return u.Hostname(), nil
 }
