@@ -8,17 +8,25 @@ import (
 type Reporting struct{}
 
 // AandAAARecords prints A and AAA records to the terminal grouped by zone.
-func (rep *Reporting) AandAAARecords(zone models.ZoneFile) []string {
-	return rep.getRecords(zone, []string{"A", "AAA"})
+func (rep *Reporting) AandAAARecords(zone *models.ZoneFile) []string {
+	return rep.sortRecords(zone, []string{"A", "AAA"})
 }
 
 // CNAMERecords prints CNAME records to the terminal grouped by zone.
-func (rep *Reporting) CNAMERecords(zone models.ZoneFile) []string {
-	return rep.getRecords(zone, []string{"CNAME"})
+func (rep *Reporting) CNAMERecords(zone *models.ZoneFile) map[string][]map[string]string {
+	outerMap := make(map[string][]map[string]string)
+	for _, rec := range zone.Records {
+		if rec.Type == "CNAME" {
+			innerMap := make(map[string]string)
+			innerMap[rec.Name+"."+zone.Origin] = rec.Content
+			outerMap[zone.Origin] = append(outerMap[zone.Origin], innerMap)
+		}
+	}
+	return outerMap
 }
 
 // GetFQDNTargets prints potential targets by outputting A/AAA/CNAME values and IP addresses.
-func (rep *Reporting) GetFQDNTargets(zone models.ZoneFile) []string {
+func (rep *Reporting) GetFQDNTargets(zone *models.ZoneFile) []string {
 	var results []string
 	origin := strings.TrimSuffix(zone.Origin, ".")
 	for _, rec := range zone.Records {
@@ -27,7 +35,7 @@ func (rep *Reporting) GetFQDNTargets(zone models.ZoneFile) []string {
 			if rec.Name == "@" || rec.Name == "*" {
 				fqdn = origin
 			}
-			if !rep.contains(results, fqdn) {
+			if !rep.sliceContainsString(results, fqdn) {
 				results = append(results, fqdn)
 			}
 		}
@@ -35,18 +43,21 @@ func (rep *Reporting) GetFQDNTargets(zone models.ZoneFile) []string {
 	return results
 }
 
-// getRecords prints requested records to the terminal grouped by zone.
-func (rep *Reporting) getRecords(zone models.ZoneFile, rec []string) []string {
-	var result []string
-	records := rep.sortRecords(&zone, rec)
-	for _, r := range records {
-		result = append(result, r)
+// AddURLToAsmDomains checks if the domains list already contains a URL and adds it if not.
+func (rep *Reporting) AddURLToAsmDomains(url string, asm *models.ASMAssessment) {
+	if !rep.sliceContainsString(asm.Domains, url) {
+		asm.Domains = append(asm.Domains, url)
 	}
-	return result
 }
 
-// contains checks if a []string contains a substring.
-func (rep *Reporting) contains(items []string, str string) bool {
+func (rep *Reporting) AddMissingDNSSec(domain string, asm *models.ASMAssessment) {
+	if !rep.sliceContainsString(asm.MissingDNSSEC, domain) {
+		asm.MissingDNSSEC = append(asm.MissingDNSSEC, domain)
+	}
+}
+
+// sliceContainsString checks if a []string sliceContainsString a substring.
+func (rep *Reporting) sliceContainsString(items []string, str string) bool {
 	for i := range items {
 		if items[i] == str {
 			return true
@@ -61,7 +72,7 @@ func (rep *Reporting) sortRecords(d *models.ZoneFile, requested []string) []stri
 	for _, rec := range d.Records {
 		for _, req := range requested {
 			if rec.Type == req {
-				temp = append(temp, rec.Name+" - "+rec.Content)
+				temp = append(temp, rec.Content)
 			}
 		}
 	}
