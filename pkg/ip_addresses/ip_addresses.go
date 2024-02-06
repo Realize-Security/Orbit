@@ -31,6 +31,29 @@ func (ipa *IPAddresses) IPAddressesFromZones(zone models.ZoneFile) *models.IPCol
 	return &results
 }
 
+// AddIPtoAddresses receives an IP address and validates if IPv4 or 6 and assigns to ASMAssessment.IPAddresses
+func (ipa *IPAddresses) AddIPtoAddresses(ip net.IP, asm *models.ASMAssessment) {
+	if ipa.IsIPv4(ip) {
+		asm.IPAddresses.IPv4 = append(asm.IPAddresses.IPv4, ip)
+	} else {
+		asm.IPAddresses.IPv6 = append(asm.IPAddresses.IPv6, ip)
+	}
+}
+
+func (ipa *IPAddresses) IPExistsIn(ip net.IP, asm *models.ASMAssessment) bool {
+	for i := range asm.IPAddresses.IPv4 {
+		if asm.IPAddresses.IPv4[i].Equal(ip) {
+			return true
+		}
+	}
+	for i := range asm.IPAddresses.IPv6 {
+		if asm.IPAddresses.IPv6[i].Equal(ip) {
+			return true
+		}
+	}
+	return false
+}
+
 // IsIPv4 returns true if the value is a valid IPv4.
 func (ipa *IPAddresses) IsIPv4(ip net.IP) bool {
 	return ip != nil && ip.To4() != nil
