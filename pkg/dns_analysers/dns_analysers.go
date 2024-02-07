@@ -26,11 +26,18 @@ func (an *DNSAnalyser) GetAllRecords(domain string) ([][]dns.RR, error) {
 		r, _, err := client.Exchange(m, resolverIP+":53")
 		if err != nil {
 			log.Printf("Error querying %s records: %v\n", dns.TypeToString[recordType], err)
-			continue
+			break
 		}
-		results = append(results, r.Answer)
+		if r.Answer != nil {
+			results = append(results, r.Answer)
+		}
 	}
 	return results, nil
+}
+
+// ParseDNSRecords parses an instance of []dns.RR
+func (an *DNSAnalyser) ParseDNSRecords() {
+
 }
 
 // ReverseLookup performs a reverse lookup of domains associated with an IP address.
