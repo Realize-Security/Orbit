@@ -36,6 +36,11 @@ func (an *DNSAnalyser) GetAllRecords(domain string) ([][]dns.RR, error) {
 // ReverseLookup performs a reverse lookup of domains associated with an IP address.
 func (an *DNSAnalyser) ReverseLookup(ip string) ([]string, error) {
 	names, err := net.LookupAddr(ip)
+	for i := range names {
+		if strings.HasSuffix(names[i], ".") {
+			names[i] = strings.TrimSuffix(names[i], ".")
+		}
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -23,10 +23,10 @@ type IPCollection struct {
 type ASMAssessment struct {
 	Zones                []ZoneFile
 	IPAddresses          IPCollection
-	UntrackedIPAddresses []IPCollection
-	PrivateIPAddresses   []IPCollection
+	UntrackedIPAddresses IPCollection
+	PrivateIPAddresses   IPCollection
 	Domains              []string
-	UntrackedDomains     []string
+	UntrackedDomains     []map[string][]string
 	MissingDNSSEC        []string
 	Aliases              []AliasRecords
 }

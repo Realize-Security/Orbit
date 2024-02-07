@@ -31,23 +31,53 @@ func (ipa *IPAddresses) IPAddressesFromZones(zone models.ZoneFile) *models.IPCol
 	return &results
 }
 
-// AddIPtoAddresses receives an IP address and validates if IPv4 or 6 and assigns to ASMAssessment.IPAddresses
-func (ipa *IPAddresses) AddIPtoAddresses(ip net.IP, asm *models.ASMAssessment) {
-	if ipa.IsIPv4(ip) {
-		asm.IPAddresses.IPv4 = append(asm.IPAddresses.IPv4, ip)
-	} else {
-		asm.IPAddresses.IPv6 = append(asm.IPAddresses.IPv6, ip)
+// AddManyIPStrAddresses receives an IP address and validates if IPv4 or 6 and assigns to ASMAssessment.IPAddresses
+func (ipa *IPAddresses) AddManyIPStrAddresses(ips []string, ipc *models.IPCollection) {
+	for i := range ips {
+		if ip := net.ParseIP(ips[i]); ip != nil {
+			ipa.CheckAddIPtoAddresses(ip, ipc)
+		}
 	}
 }
 
-func (ipa *IPAddresses) IPExistsIn(ip net.IP, asm *models.ASMAssessment) bool {
-	for i := range asm.IPAddresses.IPv4 {
-		if asm.IPAddresses.IPv4[i].Equal(ip) {
+// AddManyIPAddresses receives an IP address and validates if IPv4 or 6 and assigns to ASMAssessment.IPAddresses
+func (ipa *IPAddresses) AddManyIPAddresses(ips []net.IP, ipc *models.IPCollection) {
+	for i := range ips {
+		ipa.CheckAddIPtoAddresses(ips[i], ipc)
+	}
+}
+
+// CheckAddIPtoAddresses receives an IP address and validates if IPv4 or 6 and assigns to ASMAssessment.IPAddresses.
+// Does not ad the IP if it already exists.
+func (ipa *IPAddresses) CheckAddIPtoAddresses(ip net.IP, ipc *models.IPCollection) {
+	if ipa.IPExistsIn(ip, ipc) {
+		return
+	}
+	ipa.addIPInternal(ip, ipc)
+}
+
+// NoCheckAddIPtoAddresses receives an IP address and validates if IPv4 or 6 and assigns to ASMAssessment.IPAddresses
+// Does NOT check if IP already exists.
+func (ipa *IPAddresses) NoCheckAddIPtoAddresses(ip net.IP, ipc *models.IPCollection) {
+	ipa.addIPInternal(ip, ipc)
+}
+
+func (ipa *IPAddresses) addIPInternal(ip net.IP, ipc *models.IPCollection) {
+	if ipa.IsIPv4(ip) {
+		ipc.IPv4 = append(ipc.IPv4, ip)
+	} else {
+		ipc.IPv6 = append(ipc.IPv6, ip)
+	}
+}
+
+func (ipa *IPAddresses) IPExistsIn(ip net.IP, ipc *models.IPCollection) bool {
+	for i := range ipc.IPv4 {
+		if ipc.IPv4[i].Equal(ip) {
 			return true
 		}
 	}
-	for i := range asm.IPAddresses.IPv6 {
-		if asm.IPAddresses.IPv6[i].Equal(ip) {
+	for i := range ipc.IPv6 {
+		if ipc.IPv6[i].Equal(ip) {
 			return true
 		}
 	}

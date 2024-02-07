@@ -35,7 +35,7 @@ func (rep *Reporting) GetFQDNTargets(zone *models.ZoneFile) []string {
 			if rec.Name == "@" || rec.Name == "*" {
 				fqdn = origin
 			}
-			if !rep.sliceContainsString(results, fqdn) {
+			if !rep.SliceContainsString(results, fqdn) {
 				results = append(results, fqdn)
 			}
 		}
@@ -43,21 +43,33 @@ func (rep *Reporting) GetFQDNTargets(zone *models.ZoneFile) []string {
 	return results
 }
 
-// AddURLToAsmDomains checks if the domains list already contains a URL and adds it if not.
-func (rep *Reporting) AddURLToAsmDomains(url string, asm *models.ASMAssessment) {
-	if !rep.sliceContainsString(asm.Domains, url) {
+// AddURLToAsmDomainsDupSafe checks if the domains list already contains a URL and adds it if not.
+func (rep *Reporting) AddURLToAsmDomainsDupSafe(url string, asm *models.ASMAssessment) {
+	if !rep.SliceContainsString(asm.Domains, url) {
 		asm.Domains = append(asm.Domains, url)
 	}
 }
 
+// AddURLToUntrackedDomainsDupSafe checks if the domains list already contains a URL and adds it if not.
+func (rep *Reporting) AddURLToUntrackedDomainsDupSafe(url string, ips []string, asm *models.ASMAssessment) {
+	for _, domain := range asm.UntrackedDomains {
+		if _, exists := domain[url]; exists {
+			domain[url] = append(domain[url], ips...)
+			domain[url] = rep.deduplicateStrSlice(domain[url])
+		} else {
+			domain[url] = ips
+		}
+	}
+}
+
 func (rep *Reporting) AddMissingDNSSec(domain string, asm *models.ASMAssessment) {
-	if !rep.sliceContainsString(asm.MissingDNSSEC, domain) {
+	if !rep.SliceContainsString(asm.MissingDNSSEC, domain) {
 		asm.MissingDNSSEC = append(asm.MissingDNSSEC, domain)
 	}
 }
 
-// sliceContainsString checks if a []string sliceContainsString a substring.
-func (rep *Reporting) sliceContainsString(items []string, str string) bool {
+// SliceContainsString checks if a []string SliceContainsString a substring.
+func (rep *Reporting) SliceContainsString(items []string, str string) bool {
 	for i := range items {
 		if items[i] == str {
 			return true
@@ -77,4 +89,15 @@ func (rep *Reporting) sortRecords(d *models.ZoneFile, requested []string) []stri
 		}
 	}
 	return temp
+}
+
+// deduplicateStrSlice returns a new slice without duplicated values.
+func (rep *Reporting) deduplicateStrSlice(sl []string) []string {
+	var res []string
+	for _, s := range sl {
+		if rep.SliceContainsString(res, s) {
+			res = append(res, s)
+		}
+	}
+	return res
 }
