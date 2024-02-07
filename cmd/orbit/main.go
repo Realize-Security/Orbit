@@ -76,7 +76,11 @@ func main() {
 	for _, zone := range assessment.Zones {
 		aliases := rep.CNAMERecords(&zone)
 		if aliases != nil && len(aliases) > 0 {
-			assessment.Aliases = append(assessment.Aliases, aliases)
+			al := models.AliasRecords{
+				Domain:       zone.Origin,
+				Relationship: aliases,
+			}
+			assessment.Aliases = append(assessment.Aliases, al)
 		}
 
 		o := zone.Origin

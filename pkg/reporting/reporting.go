@@ -13,16 +13,16 @@ func (rep *Reporting) AandAAARecords(zone *models.ZoneFile) []string {
 }
 
 // CNAMERecords prints CNAME records to the terminal grouped by zone.
-func (rep *Reporting) CNAMERecords(zone *models.ZoneFile) map[string][]map[string]string {
-	outerMap := make(map[string][]map[string]string)
+func (rep *Reporting) CNAMERecords(zone *models.ZoneFile) []map[string]string {
+	var results []map[string]string
 	for _, rec := range zone.Records {
 		if rec.Type == "CNAME" {
 			innerMap := make(map[string]string)
 			innerMap[rec.Name+"."+zone.Origin] = rec.Content
-			outerMap[zone.Origin] = append(outerMap[zone.Origin], innerMap)
+			results = append(results, innerMap)
 		}
 	}
-	return outerMap
+	return results
 }
 
 // GetFQDNTargets prints potential targets by outputting A/AAA/CNAME values and IP addresses.
