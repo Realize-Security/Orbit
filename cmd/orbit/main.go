@@ -102,14 +102,20 @@ func main() {
 				ipa.CheckAddIPtoAddresses(ip, &assess.IPAddresses)
 			}
 		} else {
-			targets := rep.GetFQDNTargets(&zone)
+			targets := rep.GetFQDNs(&zone)
 			for i := range targets {
 				rep.AddURLToAsmDomainsDupSafe(targets[i], &assess)
 			}
 		}
 	}
 
-	//Reverse lookups
+	// Sanity check A/AAA against domains
+	//for _, zone := range assess.Zones {
+	//	res, _ := dna.GetCNAME(zone.Origin)
+	//	fmt.Println(res)
+	//}
+
+	// Reverse lookups
 	for _, ip := range assess.IPAddresses.IPv4 {
 		domains, err := dna.ReverseLookup(ip.String())
 		if err != nil {
@@ -189,6 +195,15 @@ func main() {
 		}
 	}
 
-	fmt.Println("ok")
-
+	// Print web targets
+	for _, dom := range assess.Domains {
+		fmt.Println(dom)
+	}
+	for _, alias := range assess.Aliases {
+		for _, al := range alias.Relationship {
+			for key, _ := range al {
+				fmt.Println(al[key])
+			}
+		}
+	}
 }
