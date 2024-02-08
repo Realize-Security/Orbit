@@ -18,7 +18,11 @@ func (rep *Reporting) CNAMERecords(zone *models.ZoneFile) []map[string]string {
 	for _, rec := range zone.Records {
 		if rec.Type == "CNAME" {
 			innerMap := make(map[string]string)
-			innerMap[rec.Name+"."+zone.Origin] = rec.Content
+			con := rec.Content
+			if strings.HasSuffix(con, ".") {
+				con = strings.TrimSuffix(con, ".")
+			}
+			innerMap[rec.Name+"."+zone.Origin] = con
 			results = append(results, innerMap)
 		}
 	}
