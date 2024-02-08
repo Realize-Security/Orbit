@@ -25,8 +25,8 @@ func (rep *Reporting) CNAMERecords(zone *models.ZoneFile) []map[string]string {
 	return results
 }
 
-// GetFQDNTargets prints potential targets by outputting A/AAA/CNAME values and IP addresses.
-func (rep *Reporting) GetFQDNTargets(zone *models.ZoneFile) []string {
+// GetFQDNs prints FQDNs by resolving A/AAA/CNAME values and IP addresses.
+func (rep *Reporting) GetFQDNs(zone *models.ZoneFile) []string {
 	var results []string
 	origin := strings.TrimSuffix(zone.Origin, ".")
 	for _, rec := range zone.Records {
