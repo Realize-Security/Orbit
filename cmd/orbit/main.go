@@ -12,6 +12,7 @@ import (
 	"orbit/pkg/reporting"
 	"orbit/pkg/zone_files"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -83,6 +84,23 @@ func main() {
 	// Get aliases
 	for _, zone := range assess.Zones {
 		aliases := rep.CNAMERecords(&zone)
+		// Remove .gtm domains. These are mostly subdomains used elsewhere
+		temp := make([]map[string]string, len(aliases))
+		re := regexp.MustCompile(`\.gtm$`)
+		for i := range aliases {
+			for _, val := range aliases[i] {
+				if !re.MatchString(val) {
+					// Only use values which could be valid domains.
+					if len(strings.Split(val, ".")) > 2 {
+						temp[i] = aliases[i]
+					}
+				}
+			}
+		}
+		if len(temp) > 0 {
+			aliases = temp
+			temp = nil
+		}
 		if aliases != nil && len(aliases) > 0 {
 			al := models.AliasRecords{
 				Domain:       zone.Origin,
@@ -195,15 +213,22 @@ func main() {
 		}
 	}
 
+	targets := make([]string, len(assess.Domains))
+
 	// Print web targets
-	for _, dom := range assess.Domains {
-		fmt.Println(dom)
+	for i := range assess.Domains {
+		targets[i] = assess.Domains[i]
 	}
 	for _, alias := range assess.Aliases {
 		for _, al := range alias.Relationship {
 			for key, _ := range al {
-				fmt.Println(al[key])
+				if !rep.SliceContainsString(targets, al[key]) {
+					targets = append(targets, al[key])
+				}
 			}
 		}
+	}
+	for i := range targets {
+		fmt.Println(targets[i] + "/")
 	}
 }
