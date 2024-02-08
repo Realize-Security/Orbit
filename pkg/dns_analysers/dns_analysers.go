@@ -35,11 +35,6 @@ func (an *DNSAnalyser) GetAllRecords(domain string) ([][]dns.RR, error) {
 	return results, nil
 }
 
-// ParseDNSRecords parses an instance of []dns.RR
-func (an *DNSAnalyser) ParseDNSRecords() {
-
-}
-
 // ReverseLookup performs a reverse lookup of domains associated with an IP address.
 func (an *DNSAnalyser) ReverseLookup(ip string) ([]string, error) {
 	names, err := net.LookupAddr(ip)
@@ -111,7 +106,6 @@ func (an *DNSAnalyser) GetTXT(domain string) ([]string, error) {
 			}
 		}
 	}
-
 	return txtRecords, nil
 }
 
