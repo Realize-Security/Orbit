@@ -97,9 +97,12 @@ func (rep *Reporting) sortRecords(d *models.ZoneFile, requested []string) []stri
 
 // deduplicateStrSlice returns a new slice without duplicated values.
 func (rep *Reporting) deduplicateStrSlice(sl []string) []string {
+	encountered := make(map[string]bool)
 	var res []string
+
 	for _, s := range sl {
-		if rep.SliceContainsString(res, s) {
+		if _, found := encountered[s]; !found {
+			encountered[s] = true
 			res = append(res, s)
 		}
 	}
