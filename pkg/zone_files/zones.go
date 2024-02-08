@@ -57,17 +57,17 @@ func readZoneFileDirectory(path string) ([]models.ZoneFile, error) {
 		if file_management.IsZoneFile(file) {
 			zoneFiles = append(zoneFiles, file)
 		}
-		for i := range zoneFiles {
-			zfLines, err := file_management.ReadFileLines(path + "/" + zoneFiles[i].Name())
-			if err != nil {
-				continue
-			}
-			zfData, err := parseZoneFileData(zfLines)
-			if err != nil {
-				continue
-			}
-			results = append(results, zfData)
+	}
+	for i := range zoneFiles {
+		zfLines, err := file_management.ReadFileLines(path + "/" + zoneFiles[i].Name())
+		if err != nil {
+			continue
 		}
+		zfData, err := parseZoneFileData(zfLines)
+		if err != nil {
+			continue
+		}
+		results = append(results, zfData)
 	}
 	return results, err
 }
