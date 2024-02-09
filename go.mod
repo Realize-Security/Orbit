@@ -12,6 +12,7 @@ require (
 	github.com/go-playground/validator/v10 v10.17.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
+	github.com/likexian/whois v1.15.1 // indirect
 	github.com/miekg/dns v1.1.58 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect

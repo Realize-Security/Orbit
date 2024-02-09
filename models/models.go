@@ -23,7 +23,7 @@ type IPCollection struct {
 type ASMAssessment struct {
 	Zones                []ZoneFile
 	IPAddresses          IPCollection
-	UntrackedIPAddresses IPCollection
+	UntrackedIPAddresses []UntrackedIP
 	PrivateIPAddresses   IPCollection
 	Domains              []string
 	UntrackedDomains     []map[string][]string
@@ -31,7 +31,27 @@ type ASMAssessment struct {
 	Aliases              []AliasRecords
 }
 
+type UntrackedIP struct {
+	Domain    string
+	Addresses IPCollection
+}
+
 type AliasRecords struct {
 	Domain       string
 	Relationship []map[string]string
+}
+
+type WHOISRecord struct {
+	NetRange      string
+	CIDR          string
+	NetName       string
+	Organization  string
+	OrgName       string
+	Address       string
+	City          string
+	StateProv     string
+	PostalCode    string
+	Country       string
+	OrgTechEmail  string
+	OrgAbuseEmail string
 }

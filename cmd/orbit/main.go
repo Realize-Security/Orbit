@@ -65,6 +65,10 @@ func main() {
 	reviewPrivateIPs()
 
 	printURLTargets()
+
+	printUntrackedIPs()
+
+	printDNSSECMissing()
 }
 
 func getZoneData(zf string) {
@@ -204,23 +208,39 @@ func processReverseLookups() {
 
 func domainIPLookups() {
 	for i := range assess.Domains {
+		var ut models.UntrackedIP
+		ut.Domain = assess.Domains[i]
 		ips, err := dna.IPLookup(assess.Domains[i])
 		if err != nil {
 			break
 		}
 		for ip := range ips {
-			if !ipa.IPExistsIn(ips[ip], &assess.IPAddresses) {
-				ipa.NoCheckAddIPtoAddresses(ips[ip], &assess.UntrackedIPAddresses)
+			if !ipa.IPExistsIn(ips[ip], &assess.IPAddresses) && ips[ip] != nil {
+				var ipc models.IPCollection
+				ipa.NoCheckAddIPtoAddresses(ips[ip], &ipc)
+				if ipa.IsIPv4(ips[ip]) {
+					ut.Addresses.IPv4 = append(ut.Addresses.IPv4, ips[ip])
+				} else {
+					ut.Addresses.IPv6 = append(ut.Addresses.IPv6, ips[ip])
+				}
 			} else {
 				ipa.NoCheckAddIPtoAddresses(ips[ip], &assess.IPAddresses)
 			}
 		}
+		if len(ut.Addresses.IPv4) > 0 || len(ut.Addresses.IPv6) > 0 {
+			assess.UntrackedIPAddresses = append(assess.UntrackedIPAddresses, ut)
+		}
 	}
+
 }
 
 func reviewPrivateIPs() {
 	tracked := append(assess.IPAddresses.IPv4, assess.IPAddresses.IPv6...)
-	untracked := append(assess.UntrackedIPAddresses.IPv4, assess.UntrackedIPAddresses.IPv6...)
+	var untracked []net.IP
+	for _, ut := range assess.UntrackedIPAddresses {
+		untracked = append(untracked, ut.Addresses.IPv4...)
+		untracked = append(untracked, ut.Addresses.IPv6...)
+	}
 	allIps := append(tracked, untracked...)
 	tracked, tracked = nil, nil
 	for i := range allIps {
@@ -231,6 +251,7 @@ func reviewPrivateIPs() {
 }
 
 func printURLTargets() {
+	fmt.Println("\n---- Potential Domains ----")
 	targets := make([]string, len(assess.Domains))
 
 	// Print web targets
@@ -248,5 +269,36 @@ func printURLTargets() {
 	}
 	for i := range targets {
 		fmt.Println(targets[i] + "/")
+	}
+}
+
+func printUntrackedIPs() {
+	fmt.Println("\n---- Untracked IPs ----")
+	// More mem efficient with a loop instead of append?
+	ips := make([]net.IP, 0)
+	for _, ip := range assess.UntrackedIPAddresses {
+		ips = append(ips, ip.Addresses.IPv4...)
+	}
+	for _, utIps := range assess.UntrackedIPAddresses {
+		var comb []net.IP
+		comb = append(comb, utIps.Addresses.IPv4...)
+		comb = append(comb, utIps.Addresses.IPv6...)
+		for _, ip := range comb {
+			who, err := dna.Whois(ip.String())
+			if err != nil || strings.Contains(who, "Error: Invalid query") {
+				who = "Unknown WHOIS"
+			} else {
+				parsedWhois := dna.ParseWHOIS(who)
+				who = parsedWhois.OrgName
+			}
+			fmt.Printf("%s - %s - %s\n", ip.String(), utIps.Domain, who)
+		}
+	}
+}
+
+func printDNSSECMissing() {
+	fmt.Println("\n---- No DNSSEC ----")
+	for _, dom := range assess.MissingDNSSEC {
+		fmt.Println(dom)
 	}
 }

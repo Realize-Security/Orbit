@@ -1,16 +1,32 @@
 package dns_analysers
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
+	"github.com/likexian/whois"
 	"github.com/miekg/dns"
 	"log"
 	"net"
+	"orbit/models"
+	"regexp"
 	"strings"
 )
 
 type DNSAnalyser struct{}
 
 var resolverIP = "8.8.8.8"
+
+func (an *DNSAnalyser) Whois(target string) (string, error) {
+	if target == "" {
+		return "", errors.New("empty string for whois request")
+	}
+	result, err := whois.Whois(target)
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
 
 // GetAllRecords queries for specific DNS record types for a domain.
 func (an *DNSAnalyser) GetAllRecords(domain string) ([][]dns.RR, error) {
@@ -125,6 +141,71 @@ func (an *DNSAnalyser) DNSSECEnabled(domain string) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func (an *DNSAnalyser) ParseWHOIS(input string) *models.WHOISRecord {
+	scanner := bufio.NewScanner(strings.NewReader(input))
+	record := models.WHOISRecord{}
+
+	// Define regular expressions for the fields of interest
+	regexMap := map[string]*regexp.Regexp{
+		"NetRange":      regexp.MustCompile(`^NetRange:\s+(.+)`),
+		"CIDR":          regexp.MustCompile(`^CIDR:\s+(.+)`),
+		"NetName":       regexp.MustCompile(`^NetName:\s+(.+)`),
+		"Organization":  regexp.MustCompile(`^Organization:\s+(.+)`),
+		"OrgName":       regexp.MustCompile(`^OrgName:\s+(.+)`),
+		"Address":       regexp.MustCompile(`^Address:\s+(.+)`),
+		"City":          regexp.MustCompile(`^City:\s+(.+)`),
+		"StateProv":     regexp.MustCompile(`^StateProv:\s+(.+)`),
+		"PostalCode":    regexp.MustCompile(`^PostalCode:\s+(.+)`),
+		"Country":       regexp.MustCompile(`^Country:\s+(.+)`),
+		"OrgTechEmail":  regexp.MustCompile(`^OrgTechEmail:\s+(.+)`),
+		"OrgAbuseEmail": regexp.MustCompile(`^OrgAbuseEmail:\s+(.+)`),
+	}
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		for field, regex := range regexMap {
+			matches := regex.FindStringSubmatch(line)
+			if len(matches) > 1 {
+				// Using reflection to set the value dynamically based on the field
+				// This simplifies the addition of new fields
+				switch field {
+				case "NetRange":
+					record.NetRange = matches[1]
+				case "CIDR":
+					record.CIDR = matches[1]
+				case "NetName":
+					record.NetName = matches[1]
+				case "Organization":
+					record.Organization = matches[1]
+				case "OrgName":
+					record.OrgName = matches[1]
+				case "Address":
+					// Concatenate addresses if more than one
+					if record.Address != "" {
+						record.Address += "; " + matches[1]
+					} else {
+						record.Address = matches[1]
+					}
+				case "City":
+					record.City = matches[1]
+				case "StateProv":
+					record.StateProv = matches[1]
+				case "PostalCode":
+					record.PostalCode = matches[1]
+				case "Country":
+					record.Country = matches[1]
+				case "OrgTechEmail":
+					record.OrgTechEmail = matches[1]
+				case "OrgAbuseEmail":
+					record.OrgAbuseEmail = matches[1]
+				}
+			}
+		}
+	}
+
+	return &record
 }
 
 func initDNSMsg(domain string, dnsType uint16) (*dns.Msg, error) {
