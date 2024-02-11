@@ -66,6 +66,7 @@ func (rep *Reporting) AddURLToUntrackedDomainsDupSafe(url string, ips []string, 
 	}
 }
 
+// AddMissingDNSSec tracks domains which do not have DNSSEC enabled.
 func (rep *Reporting) AddMissingDNSSec(domain string, asm *models.ASMAssessment) {
 	if !rep.SliceContainsString(asm.MissingDNSSEC, domain) {
 		asm.MissingDNSSEC = append(asm.MissingDNSSEC, domain)
