@@ -329,7 +329,7 @@ func printDNSSECMissing() {
 }
 
 func printHostingProviders() {
-	fmt.Println("\n---- No DNSSEC ----")
+	fmt.Println("\n---- Hosting Providers (IPs) ----")
 	for key, _ := range assess.HostingProviders {
 		fmt.Println(key)
 	}
