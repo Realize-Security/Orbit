@@ -29,6 +29,7 @@ type ASMAssessment struct {
 	UntrackedDomains     []map[string][]string
 	MissingDNSSEC        []string
 	Aliases              []AliasRecords
+	HostingProviders     map[string][]string
 }
 
 type UntrackedIP struct {
@@ -54,4 +55,5 @@ type WHOISRecord struct {
 	Country       string
 	OrgTechEmail  string
 	OrgAbuseEmail string
+	Remarks       string
 }

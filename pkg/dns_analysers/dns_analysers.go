@@ -149,18 +149,19 @@ func (an *DNSAnalyser) ParseWHOIS(input string) *models.WHOISRecord {
 
 	// Define regular expressions for the fields of interest
 	regexMap := map[string]*regexp.Regexp{
-		"NetRange":      regexp.MustCompile(`^NetRange:\s+(.+)`),
-		"CIDR":          regexp.MustCompile(`^CIDR:\s+(.+)`),
-		"NetName":       regexp.MustCompile(`^NetName:\s+(.+)`),
-		"Organization":  regexp.MustCompile(`^Organization:\s+(.+)`),
-		"OrgName":       regexp.MustCompile(`^OrgName:\s+(.+)`),
-		"Address":       regexp.MustCompile(`^Address:\s+(.+)`),
-		"City":          regexp.MustCompile(`^City:\s+(.+)`),
-		"StateProv":     regexp.MustCompile(`^StateProv:\s+(.+)`),
-		"PostalCode":    regexp.MustCompile(`^PostalCode:\s+(.+)`),
-		"Country":       regexp.MustCompile(`^Country:\s+(.+)`),
-		"OrgTechEmail":  regexp.MustCompile(`^OrgTechEmail:\s+(.+)`),
-		"OrgAbuseEmail": regexp.MustCompile(`^OrgAbuseEmail:\s+(.+)`),
+		"NetRange":      regexp.MustCompile(`(?i)^NetRange:\s+(.+)`),
+		"CIDR":          regexp.MustCompile(`(?i)^CIDR:\s+(.+)`),
+		"NetName":       regexp.MustCompile(`(?i)^NetName:\s+(.+)`),
+		"Organization":  regexp.MustCompile(`(?i)^Organization:\s+(.+)`),
+		"OrgName":       regexp.MustCompile(`(?i)^OrgName:\s+(.+)`),
+		"Address":       regexp.MustCompile(`(?i)^Address:\s+(.+)`),
+		"City":          regexp.MustCompile(`(?i)^City:\s+(.+)`),
+		"StateProv":     regexp.MustCompile(`(?i)^StateProv:\s+(.+)`),
+		"PostalCode":    regexp.MustCompile(`(?i)^PostalCode:\s+(.+)`),
+		"Country":       regexp.MustCompile(`(?i)^Country:\s+(.+)`),
+		"OrgTechEmail":  regexp.MustCompile(`(?i)^OrgTechEmail:\s+(.+)`),
+		"OrgAbuseEmail": regexp.MustCompile(`(?i)^OrgAbuseEmail:\s+(.+)`),
+		"Remarks":       regexp.MustCompile(`(?i)^remarks:\s+(.+)`),
 	}
 
 	for scanner.Scan() {
@@ -200,6 +201,10 @@ func (an *DNSAnalyser) ParseWHOIS(input string) *models.WHOISRecord {
 					record.OrgTechEmail = matches[1]
 				case "OrgAbuseEmail":
 					record.OrgAbuseEmail = matches[1]
+				case "Remarks":
+					if strings.Contains(matches[1], "@") {
+						record.Remarks = strings.Split(matches[1], "@")[1]
+					}
 				}
 			}
 		}

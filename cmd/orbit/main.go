@@ -68,6 +68,7 @@ func main() {
 	printURLTargets()
 	printUntrackedIPs()
 	printDNSSECMissing()
+	printHostingProviders()
 }
 
 func getZoneData(zf string) {
@@ -155,12 +156,36 @@ func getAliasesFromZones() {
 }
 
 func processReverseLookups() {
+	hosters := make(map[string][]string)
 	allowed := []string{"money", "fx", "ttt", "novo", "explore", "currency"}
 	for _, ip := range assess.IPAddresses.IPv4 {
 		domains, err := dna.ReverseLookup(ip.String())
 		if err != nil {
 			continue
 		}
+
+		var host string
+		whois, err := dna.Whois(ip.String())
+		if err != nil {
+			host = "Unknown hosting provider."
+		} else {
+			w := dna.ParseWHOIS(whois)
+			e := w.OrgAbuseEmail
+			if strings.Contains(e, "@") {
+				host = strings.Split(e, "@")[1]
+			} else {
+				host = w.OrgName
+
+			}
+			if host == "" {
+				host = w.Remarks
+			}
+			if host == "" {
+				host = w.NetName
+			}
+		}
+		hosters[host] = append(hosters[host], ip.String())
+
 		for _, d := range domains {
 			// Filter out keywords specific to target - Needed to avoid enumerating all third-party services using public cloud load balancers
 			hasSub := func(allowed []string, domain string) bool {
@@ -203,6 +228,7 @@ func processReverseLookups() {
 			}
 		}
 	}
+	assess.HostingProviders = hosters
 }
 
 func domainIPLookups() {
@@ -299,5 +325,12 @@ func printDNSSECMissing() {
 	fmt.Println("\n---- No DNSSEC ----")
 	for _, dom := range assess.MissingDNSSEC {
 		fmt.Println(dom)
+	}
+}
+
+func printHostingProviders() {
+	fmt.Println("\n---- No DNSSEC ----")
+	for key, _ := range assess.HostingProviders {
+		fmt.Println(key)
 	}
 }
