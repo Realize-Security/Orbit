@@ -64,10 +64,9 @@ func main() {
 	// Review all IP addresses and note any exposed internal IP addresses in records.
 	reviewPrivateIPs()
 
+	// Print test data
 	printURLTargets()
-
 	printUntrackedIPs()
-
 	printDNSSECMissing()
 }
 
