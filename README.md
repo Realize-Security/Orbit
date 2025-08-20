@@ -1,0 +1,4 @@
+- This largely needs rewriting and updating.
+- Command line attack surface mapping capability.
+- Parses zone files and performs lookups to identify what known and unknown services are related to these assets.
+- The capability uses IP addresses and hostnames to create a cross-section of a target estate.
